@@ -256,16 +256,42 @@ method fillK(a:array<int>, n:int, k:int, count:int) returns (b:bool)
 
     Hint: you may want to define an auxiliary function and method.
 */
+/**
+TODO
+function substring(a: array<char>, b: array<char>, pos: int) : int
+    decreases pos
+    requires pos >= 0
+    requires pos < a.Length && pos < b.Length
+{
+    if a[pos] != b[pos] then 0 else 1 * substring(a, b, pos - 1)
+}
+*/
 method containsSubString(a:array<char>, b:array<char>) returns (pos:int)
     requires b.Length <= a.Length
+    //ensures 0 <= pos < a.Length - b.Length ==> forall k :: 0 <= k < b.Length ==> a[k + pos] == b[k]
 {
     var i := 0;
+    var count := 0;
     var n := a.Length;
 
     while i < n
         decreases n - i
+        invariant 0 <= count <= b.Length - 1
     {
-        //if a[i] 
+        if a[i] == b[count]
+        {
+            if count == b.Length - 1
+            {
+                return pos;
+            }
+
+            count := count + 1;
+        }
+        else 
+        {
+            pos := pos + count + 1;
+            count := 0;
+        }
 
         i := i + 1;
     }
@@ -289,6 +315,28 @@ method containsSubString(a:array<char>, b:array<char>) returns (pos:int)
     so that it satisfies the post-conditions assuming the pre-conditions.
 */
 method resize(a:array<int>) returns (z:array<int>)
+    requires true
+    ensures z.Length > a.Length
+    ensures a.Length != 0 ==> forall k :: 0 <= k < a.Length ==> z[k] == a[k]
+{
+    var i := 0;
+    var n := 50;
+    if (a.Length != 0) {
+        n := a.Length * 2;
+    }
+    
+    z := new int[n];
+    while i < a.Length
+        decreases a.Length - i
+        invariant 0 <= i <= a.Length
+        invariant forall k :: 0 <= k < i ==> z[k] == a[k]
+    {
+        z[i] := a[i];
+        i := i + 1;
+    }
+
+    return z;
+}
 
 /**
     Specify and implement method reverse. This method returns a new array b
@@ -343,6 +391,14 @@ method reverse(a:array<int>, n:int) returns (z:array<int>)
     array a.
 */
 method push(a:array<int>, na:int, elem:int) returns (b:array<int>, nb:int)
+    requires na < a.Length
+    modifies a 
+{
+    a[na] := elem;
+    nb := na + 1;
+
+    return a, nb;
+}
 
 /**
     Specify and implement method pop. Given an array and the number of
@@ -354,7 +410,25 @@ method push(a:array<int>, na:int, elem:int) returns (b:array<int>, nb:int)
     the strongest postconditions you can think of. Implement the method
     so that it satisfies the post-conditions assuming the pre-conditions.
 */
-method pop(a:array<int>, na:int) returns (b:array<int>, nb:int, elem:int)
+method pop(a:array<int>, na:int) returns (b:array<int>, nb:int, elem:int) 
+    requires na > 0
+{
+    var i := 0;
+    b := new int[a.Length];
+
+    while i < a.Length - 1
+        decreases a.Length - 1 - i
+        invariant 0 <= i <= a.Length - 1
+    {
+        b[i] := a[i];
+        i := i + 1;
+    }
+
+    elem := a[i];
+    nb := na - 1;
+
+    return b, nb, elem;
+}
 
 /**
     Specify and implement method Count. Given an array a and some integer v, 
@@ -367,7 +441,7 @@ method pop(a:array<int>, na:int) returns (b:array<int>, nb:int, elem:int)
 //TODO faltam os ensures/invariants
 method Count(a:array<int>, v:int) returns (z:int)
     requires true
-    ensures z >= 0
+    ensures 0 <= z <= a.Length
 {
     var i := 0;
     z := 0;
@@ -375,6 +449,8 @@ method Count(a:array<int>, v:int) returns (z:int)
 
     while i < n
         decreases n - i
+        invariant 0 <= i <= n
+        invariant 0 <= z <= i
     {
         if a[i] == v
         {
